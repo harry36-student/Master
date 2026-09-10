@@ -1,0 +1,9 @@
+              precision    recall  f1-score   support
+
+         ACA     0.9934    0.9262    0.9586       325
+         SCC     0.9373    0.9836    0.9599       304
+           N     0.9792    1.0000    0.9895       329
+
+    accuracy                         0.9697       958
+   macro avg     0.9700    0.9699    0.9693       958
+weighted avg     0.9707    0.9697    0.9696       958

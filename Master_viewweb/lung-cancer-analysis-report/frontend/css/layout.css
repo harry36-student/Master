@@ -1,0 +1,203 @@
+/* ============================================================
+   layout.css — 三欄式 CSS Grid 佈局與響應式設計
+   Lung Cancer Analysis System
+   ============================================================ */
+
+/* ── 頁面基礎結構 ── */
+.app-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+}
+
+/* ── 頁首 ── */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: 0 var(--spacing-xl);
+  height: 60px;
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.app-header__logo {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.app-header__logo svg {
+  width: 32px;
+  height: 32px;
+}
+
+.app-header__title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.app-header__subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+/* ── 主內容區 ── */
+.app-main {
+  flex: 1;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  overflow: hidden;
+}
+
+/* ── 三欄式 Grid 佈局（1280px+） ── */
+.main-layout {
+  display: grid;
+  grid-template-columns: 25% 45% 30%;
+  grid-template-rows: 1fr;
+  gap: var(--spacing-lg);
+  height: calc(100vh - 60px - var(--spacing-lg) * 2);
+  min-height: 600px;
+}
+
+.main-layout__left {
+  grid-column: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  overflow-y: auto;
+  padding-right: var(--spacing-xs);
+}
+
+.main-layout__center {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  overflow-y: auto;
+  padding-right: var(--spacing-xs);
+}
+
+.main-layout__right {
+  grid-column: 3;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  overflow-y: auto;
+  padding-right: var(--spacing-xs);
+}
+
+/* ── 捲軸樣式 ── */
+.main-layout__left::-webkit-scrollbar,
+.main-layout__center::-webkit-scrollbar,
+.main-layout__right::-webkit-scrollbar {
+  width: 4px;
+}
+
+.main-layout__left::-webkit-scrollbar-track,
+.main-layout__center::-webkit-scrollbar-track,
+.main-layout__right::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.main-layout__left::-webkit-scrollbar-thumb,
+.main-layout__center::-webkit-scrollbar-thumb,
+.main-layout__right::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+/* ── 影像並排展示區 ── */
+.image-viewer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+}
+
+/* ── 響應式：768px–1279px（兩欄） ── */
+@media (min-width: 768px) and (max-width: 1279px) {
+  .app-main {
+    padding: var(--spacing-md);
+  }
+
+  .main-layout {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    height: auto;
+    min-height: unset;
+  }
+
+  .main-layout__left {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .main-layout__center {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .main-layout__right {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .image-viewer {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ── 響應式：767px 以下（單欄） ── */
+@media (max-width: 767px) {
+  .app-header {
+    padding: 0 var(--spacing-md);
+    height: 52px;
+  }
+
+  .app-header__subtitle {
+    display: none;
+  }
+
+  .app-main {
+    padding: var(--spacing-md) var(--spacing-sm);
+  }
+
+  .main-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    height: auto;
+    min-height: unset;
+    gap: var(--spacing-md);
+  }
+
+  .main-layout__left,
+  .main-layout__center,
+  .main-layout__right {
+    grid-column: 1;
+    overflow-y: visible;
+    padding-right: 0;
+  }
+
+  .image-viewer {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── 區塊標題 ── */
+.section-title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: var(--spacing-sm);
+}

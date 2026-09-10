@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-TW" id="html-root">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="肺癌組織病理學影像分析系統 — 整合深度學習模型視覺化（Grad-CAM）與本地 LLM 的 H&E 切片輔助診斷工具" />
+  <meta name="theme-color" content="#0F1923" />
+  <title>Lung Cancer Analysis System</title>
+
+  <link rel="stylesheet" href="css/main.css" />
+  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="app-wrapper">
+
+  <header class="app-header" role="banner">
+    <div class="app-header__logo" aria-hidden="true">
+      <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="肺部圖示" role="img">
+        <path d="M24 6 L24 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M24 14 C20 14 14 16 12 20 C10 24 10 30 11 34 C12 38 14 40 16 40 C18 40 20 38 20 35 L20 26 C20 23 22 21 24 21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M24 14 C28 14 34 16 36 20 C38 24 38 30 37 34 C36 38 34 40 32 40 C30 40 28 38 28 35 L28 26 C28 23 26 21 24 21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M11 26 C9 26 8 28 8 30 C8 33 10 35 12 35" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+        <path d="M37 26 C39 26 40 28 40 30 C40 33 38 35 36 35" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+      </svg>
+    </div>
+
+    <h1 class="app-header__title" data-i18n="appTitle">Lung Cancer Histopathology Analysis</h1>
+    <span class="app-header__subtitle" data-i18n="appSubtitle">H&amp;E · Grad-CAM · Pathology Report</span>
+
+    <nav class="app-tabs" aria-label="系統模式切換">
+      <button id="tab-clinical" class="tab-btn active" onclick="switchTab('clinical')">🩺 臨床輔助診斷</button>
+      <button id="tab-federated" class="tab-btn" onclick="switchTab('federated')">🌐 聯邦學習分析面板</button>
+    </nav>
+
+    <div class="app-header__lang" role="group" aria-label="Language selector">
+      <div class="lang-selector-group">
+        <label class="lang-selector-label" for="ui-lang-selector" data-i18n="langLabel">語言</label>
+        <select id="ui-lang-selector" class="lang-selector" aria-label="Select UI language" onchange="I18n.setLanguage(this.value)">
+          <option value="zh-TW">🇹🇼 繁體中文</option>
+          <option value="en">🇺🇸 English</option>
+        </select>
+      </div>
+      <div class="lang-selector-group">
+        <label class="lang-selector-label" for="report-lang-selector" data-i18n="reportLangLabel">報告語言</label>
+        <select id="report-lang-selector" class="lang-selector" aria-label="Select report language" onchange="I18n.setReportLanguage(this.value)">
+          <option value="zh-TW">🇹🇼 繁體中文</option>
+          <option value="en">🇺🇸 English</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="app-header__status" role="status" aria-live="polite" aria-label="後端連線狀態">
+      <div id="health-status-dot" class="status-dot status-dot--checking" aria-hidden="true"></div>
+      <span id="health-status-text" class="status-text" data-i18n="statusChecking">連線中...</span>
+    </div>
+  </header>
+
+  <main class="app-main" id="main-content" role="main">
+
+    <div id="page-clinical" class="page-view active">
+      <div class="main-layout">
+        
+        <aside class="main-layout__left" aria-label="影像上傳與模型設定">
+          <section class="card" aria-labelledby="upload-section-title">
+            <div class="card__header">
+              <h2 class="card__title" id="upload-section-title" data-i18n="uploadTitle">影像上傳</h2>
+            </div>
+            <div class="card__body">
+              <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="點擊或拖放影像至此區域上傳" aria-describedby="dropzone-hint">
+                <div class="dropzone__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                </div>
+                <p class="dropzone__text" data-i18n="dropzoneText">點擊或拖放 H&amp;E 切片影像至此</p>
+                <p class="dropzone__hint" id="dropzone-hint" data-i18n="dropzoneHint">支援 JPEG、PNG、TIFF · 最大 50MB</p>
+                <input type="file" id="file-input" class="dropzone__input" accept=".jpg,.jpeg,.png,.tiff,.tif,image/jpeg,image/png,image/tiff" aria-label="選擇影像檔案" tabindex="-1" />
+              </div>
+              <div id="image-preview-container" class="hidden mt-md" aria-live="polite" aria-label="已上傳影像預覽"></div>
+            </div>
+          </section>
+
+          <section class="card mt-md" aria-labelledby="model-section-title">
+            <div class="card__header">
+              <h2 class="card__title" id="model-section-title">推論模型選擇</h2>
+            </div>
+            <div class="card__body">
+              <p class="text-xs text-muted mb-sm" style="margin-bottom: 12px;">請選擇用於分析肺部組織病理切片之推論模型</p>
+              
+              <select id="inference-model-select" aria-label="選擇分析模型" style="width: 100%; background-color: var(--bg-primary); border: 1px solid var(--border); color: var(--text-primary); padding: 10px 12px; border-radius: var(--radius); font-size: var(--font-size-sm); cursor: pointer; outline: none; transition: border-color 0.2s;">
+                <optgroup label="🌐 全域聯邦學習模型 (Federated)">
+                  <option value="fl-densenet121" selected>⭐ FL + DenseNet121 (系統預設)</option>
+                  <option value="fl-efficientnet-b3">FL + EfficientNet-B3</option>
+                  <option value="fl-mobilenetv3-small">FL + MobileNetV3-Small</option>
+                </optgroup>
+                <optgroup label="🏥 單一機構獨立訓練 (Local Baseline)">
+                  <option value="local-densenet121">DenseNet121</option>
+                  <option value="local-efficientnet-b3">EfficientNet-B3</option>
+                  <option value="local-mobilenetv3-small">MobileNetV3-Small</option>
+                </optgroup>
+              </select>
+            </div>
+          </section>
+
+          <div class="analyze-actions mt-md">
+            <button type="button" id="analyze-btn" class="btn btn--primary btn--lg btn--full" disabled aria-disabled="true" data-i18n-aria="analyzeBtn" aria-label="開始執行影像分析" aria-describedby="analyze-btn-hint">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+              <span data-i18n="analyzeBtn">開始分析</span>
+            </button>
+            <p class="form-hint text-center" id="analyze-btn-hint" data-i18n="analyzeBtnHint">上傳 H&amp;E 切片影像後即可分析</p>
+            <button type="button" id="reanalyze-btn" class="btn btn--ghost btn--full hidden" aria-label="重新執行分析">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <polyline points="1 4 1 10 7 10"/>
+                <path d="M3.51 15a9 9 0 1 0 .49-3.51"/>
+              </svg>
+              <span data-i18n="reanalyzeBtn">重新分析</span>
+            </button>
+          </div>
+        </aside>
+
+        <section class="main-layout__center" aria-label="分析進度與影像展示">
+          <div class="progress-steps" role="list" aria-label="分析流程進度">
+            <div id="progress-step-1" class="progress-step" role="listitem" aria-label="步驟 1：影像分類">
+              <div class="progress-step__icon" aria-hidden="true">1</div>
+              <div class="progress-step__label" data-i18n="step1">影像分類</div>
+            </div>
+            <div id="progress-step-2" class="progress-step" role="listitem" aria-label="步驟 2：產生熱力圖">
+              <div class="progress-step__icon" aria-hidden="true">2</div>
+              <div class="progress-step__label" data-i18n="step2">產生熱力圖</div>
+            </div>
+            <div id="progress-step-3" class="progress-step" role="listitem" aria-label="步驟 3：產生報告">
+              <div class="progress-step__icon" aria-hidden="true">3</div>
+              <div class="progress-step__label" data-i18n="step3">產生報告</div>
+            </div>
+          </div>
+
+          <div class="image-viewer" aria-label="影像展示區">
+            <article class="card image-card" id="original-image-card" aria-labelledby="original-image-label">
+              <div class="card__header"><h3 class="card__title" id="original-image-label">Original Image</h3></div>
+              <div class="image-card__img-wrapper">
+                <div id="original-image-placeholder" class="image-card__placeholder" aria-label="尚未上傳影像">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                  </svg>
+                  <span data-i18n="waitingUpload">等待上傳</span>
+                </div>
+                <!-- 🔥 移除 inline style="display:none"，改用 .hidden class，讓 JS 可以正確控制 -->
+                <img id="original-image" class="hidden" src="" alt="原始醫療影像" aria-label="已上傳的原始醫療影像" style="width: 100%; height: 100%; object-fit: cover;" />
+              </div>
+              <div class="image-card__label" aria-hidden="true">Original Image</div>
+            </article>
+
+            <article class="card image-card" id="heatmap-federated-card" aria-labelledby="heatmap-federated-label">
+              <div class="card__header"><h3 class="card__title text-accent" id="heatmap-federated-label">Federated Grad-CAM</h3></div>
+              <div class="image-card__img-wrapper">
+                <div id="heatmap-federated-placeholder" class="image-card__placeholder" aria-label="尚未產生熱力圖">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+                    <path d="M12 6v6l4 2"/>
+                  </svg>
+                  <span data-i18n="waitingAnalysis">等待分析</span>
+                </div>
+                <img id="heatmap-federated-image" class="hidden" src="" alt="聯邦模型 Grad-CAM 熱力圖疊加影像" style="width: 100%; height: 100%; object-fit: cover;" />
+              </div>
+              <div class="image-card__label" aria-hidden="true">Federated (FL)</div>
+            </article>
+
+            <article class="card image-card" id="heatmap-local-card" aria-labelledby="heatmap-local-label">
+              <div class="card__header"><h3 class="card__title text-muted" id="heatmap-local-label">Local Baseline Grad-CAM</h3></div>
+              <div class="image-card__img-wrapper">
+                <div id="heatmap-local-placeholder" class="image-card__placeholder" aria-label="尚未產生熱力圖">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+                    <path d="M12 6v6l4 2"/>
+                  </svg>
+                  <span data-i18n="waitingAnalysis">等待分析</span>
+                </div>
+                <img id="heatmap-local-image" class="hidden" src="" alt="單一機構模型 Grad-CAM 熱力圖疊加影像" style="width: 100%; height: 100%; object-fit: cover;" />
+              </div>
+              <div class="image-card__label" aria-hidden="true">Local Baseline</div>
+            </article>
+          </div>
+
+          <div id="classification-results" class="card hidden" role="region" aria-label="分類結果與信心分數" aria-live="polite"></div>
+        </section>
+
+        <aside class="main-layout__right" aria-label="結構化醫療報告">
+          <div class="card card--flat">
+            <div class="card__header">
+              <h2 class="card__title" data-i18n="reportTitle">醫療報告</h2>
+              <span id="report-generated-at" class="text-xs text-muted hidden" aria-live="polite"></span>
+            </div>
+          </div>
+
+          <div id="report-container" class="report-panel hidden" role="region" aria-label="結構化醫療報告內容" aria-live="polite">
+            <div id="report-findings" class="report-section report-section--findings" aria-labelledby="findings-title">
+              <div class="report-section__header" role="button" tabindex="0" aria-expanded="false" aria-controls="findings-body">
+                <span class="report-section__title" id="findings-title">FINDINGS</span>
+                <svg class="report-section__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+              <div class="report-section__body" id="findings-body" role="region">
+                <p class="report-section__placeholder" data-i18n="findingsPlaceholder">執行分析後顯示影像發現</p>
+              </div>
+            </div>
+
+            <div id="report-impression" class="report-section report-section--impression" aria-labelledby="impression-title">
+              <div class="report-section__header" role="button" tabindex="0" aria-expanded="false" aria-controls="impression-body">
+                <span class="report-section__title" id="impression-title">IMPRESSION</span>
+                <svg class="report-section__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+              <div class="report-section__body" id="impression-body" role="region">
+                <p class="report-section__placeholder" data-i18n="impressionPlaceholder">執行分析後顯示臨床印象</p>
+              </div>
+            </div>
+
+            <div id="report-recommendation" class="report-section report-section--recommendation" aria-labelledby="recommendation-title">
+              <div class="report-section__header" role="button" tabindex="0" aria-expanded="false" aria-controls="recommendation-body">
+                <span class="report-section__title" id="recommendation-title">RECOMMENDATION</span>
+                <svg class="report-section__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+              <div class="report-section__body" id="recommendation-body" role="region">
+                <p class="report-section__placeholder" data-i18n="recommendationPlaceholder">執行分析後顯示建議事項</p>
+              </div>
+            </div>
+          </div>
+
+          <div id="report-empty-state" class="card">
+            <div class="empty-state">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+              <p class="empty-state__text" data-i18n-html="true" data-i18n="reportEmpty">
+                上傳 H&amp;E 切片影像並執行分析後，<br>系統將自動產生結構化病理報告
+              </p>
+            </div>
+          </div>
+
+          <div id="export-buttons" class="export-buttons hidden" role="group" aria-label="報告匯出選項">
+            <button type="button" id="export-pdf-btn" class="btn btn--secondary" aria-label="將報告匯出為 PDF 格式並下載">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+              <span data-i18n="exportPdf">匯出 PDF</span>
+            </button>
+            <button type="button" id="export-txt-btn" class="btn btn--ghost" aria-label="將報告匯出為純文字格式並下載">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+              <span data-i18n="exportTxt">匯出文字</span>
+            </button>
+          </div>
+
+          <p class="text-xs text-muted" style="padding: 0 4px; line-height: 1.6;" data-i18n="disclaimer">
+            ⚠️ 本系統僅供醫療輔助參考，不構成正式診斷。所有結果應由合格醫療人員審閱。
+          </p>
+        </aside>
+
+      </div>
+    </div>
+
+    <div id="page-federated" class="page-view">
+      <div class="federated-layout-new">
+        
+        <div class="federated-charts-grid">
+          <div class="card">
+            <div class="card__header" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+              <h2 class="card__title">聯邦學習訓練收斂曲線</h2>
+              <select id="metric-select" style="background-color: #1e293b; color: #f8fafc; border: 1px solid #475569; border-radius: 4px; padding: 4px 8px; font-size: 12px; cursor: pointer; outline: none;">
+                <option value="accuracy">準確率 (Accuracy)</option>
+                <option value="loss">損失值 (Loss)</option>
+              </select>
+            </div>
+            <div class="card__body">
+              <p class="text-xs text-muted mb-md" id="metric-desc">展示三種主幹網路 (DenseNet121, EfficientNet-B3, MobileNetV3-Small) 於實測聯邦學習 (FedProx) 中 20 輪的收斂準確率變化</p>
+              
+              <!-- 實測最終收斂數值指標展示區 -->
+              <div id="convergence-stats" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px;">
+                <!-- 內容由 federated.js 動態更新 -->
+              </div>
+
+              <div class="chart-container-large" style="margin-bottom: 12px;">
+                <canvas id="convergenceChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card__header">
+              <h2 class="card__title">區塊二：不同聚合算法與超參數 (&mu;) 效能對比</h2>
+            </div>
+            <div class="card__body">
+              <p class="text-xs text-muted mb-md">展示不同 Proximal Term (&mu;) 設定下 FedProx 與傳統 FedAvg 的外部驗證準確率與平均 F1-Score 對比</p>
+              <div class="chart-container-large" style="margin-bottom: 16px;">
+                <canvas id="muAblationChart"></canvas>
+              </div>
+              
+              <!-- 實測超參數消融數據表格 -->
+              <div class="table-responsive" style="margin-top: 12px; border-top: 1px solid #334155; padding-top: 12px;">
+                <table class="ablation-table" style="font-size: 11px; width: 100%;">
+                  <thead>
+                    <tr>
+                      <th>聚合演算法</th>
+                      <th>係數 &mu;</th>
+                      <th>收斂輪數 (Rounds)</th>
+                      <th>外部驗證準確率</th>
+                      <th>平均 F1-Score</th>
+                    </tr>
+                  </thead>
+                  <tbody id="aggregation-table-body">
+                    <!-- Rendered dynamically by federated.js -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mt-lg">
+          <div class="card__header">
+            <h2 class="card__title">區塊三：主幹網路 &times; 聯邦學習效能對比矩陣</h2>
+          </div>
+          <div class="card__body">
+            <p class="text-xs text-muted mb-md" id="ablation-desc">驗證在 Non-IID 肺部病理組織影像數據下，不同特徵提取器與聯邦算法之交叉實驗結果 (Accuracy / F1-Score)</p>
+            <div class="table-responsive">
+              <table class="ablation-table">
+                <thead>
+                  <tr>
+                    <th>主幹網路 (Backbone)</th>
+                    <th>集中式訓練 (Centralized)</th>
+                    <th>FedAvg (傳統聯邦)</th>
+                    <th>聯邦效能差距 (&Delta;)</th>
+                  </tr>
+                </thead>
+                <tbody id="ablation-table-body">
+                  <!-- Rendered dynamically by federated.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mt-lg">
+          <div class="card__header" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <h2 class="card__title">區塊四：聯邦學習骨幹網路之詳細類別分類報告 (F1-Score)</h2>
+            <select id="model-report-select" style="background-color: #1e293b; color: #f8fafc; border: 1px solid #475569; border-radius: 4px; padding: 4px 8px; font-size: 12px; cursor: pointer; outline: none;">
+              <option value="densenet121">DenseNet121 + FL</option>
+              <option value="efficientnet_b3">EfficientNet-B3 + FL</option>
+              <option value="mobilenet_v3_small">MobileNetV3-Small + FL</option>
+            </select>
+          </div>
+          <div class="card__body">
+            <p class="text-xs text-muted mb-md">展示各個聯邦學習骨幹網路在外部測試集 (External Test Set) 下，針對肺腺癌 (ACA)、肺鱗狀細胞癌 (SCC) 與肺良性組織 (N) 的詳細指標表現</p>
+            <div class="table-responsive">
+              <table class="ablation-table" style="width: 100%;">
+                <thead>
+                  <tr>
+                    <th>病理組織類別 (Class)</th>
+                    <th>精準率 (Precision)</th>
+                    <th>召回率 (Recall)</th>
+                    <th>F1-Score 指標</th>
+                    <th>測試樣本數 (Support)</th>
+                  </tr>
+                </thead>
+                <tbody id="class-report-table-body">
+                  <!-- Rendered dynamically by federated.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div></main>
+</div>
+
+<div id="toast-container" class="toast-container" role="region" aria-label="系統通知" aria-live="polite" aria-atomic="false"></div>
+
+<script src="js/i18n.js"></script>
+<script src="js/api.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/export.js"></script>
+<script src="js/app.js"></script>
+<script src="js/federated.js"></script>
+
+<!-- federated.js 自行透過 async init 管理圖表初始化順序，此處不需額外呼叫 -->
+
+</body>
+</html>

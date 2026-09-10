@@ -1,0 +1,611 @@
+/* ============================================================
+   main.css — 全域樣式入口
+   Lung Cancer Analysis System
+   ============================================================ */
+
+/* ── 匯入其他 CSS 模組 ── */
+@import url('./theme.css');
+@import url('./layout.css');
+@import url('./components.css');
+
+/* ── Google Fonts（Inter） ── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* ══════════════════════════════════════════════
+   全域重置（CSS Reset）
+   ══════════════════════════════════════════════ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* 清除預設清單樣式 */
+ul,
+ol {
+  list-style: none;
+}
+
+/* 清除預設連結樣式 */
+a {
+  color: var(--accent);
+  text-decoration: none;
+  transition: color var(--transition);
+}
+
+a:hover {
+  color: var(--accent-light);
+}
+
+/* 圖片預設 */
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* 按鈕預設 */
+button {
+  font-family: var(--font-family);
+  cursor: pointer;
+}
+
+/* 輸入框預設 */
+input,
+textarea,
+select {
+  font-family: var(--font-family);
+}
+
+/* 標題預設 */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+
+/* 段落 */
+p {
+  line-height: 1.6;
+}
+
+/* 程式碼 */
+code,
+pre {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+/* 水平線 */
+hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: var(--spacing-md) 0;
+}
+
+/* 焦點可見性（無障礙） */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* 選取文字顏色 */
+::selection {
+  background-color: rgba(0, 188, 212, 0.3);
+  color: var(--text-primary);
+}
+
+/* ══════════════════════════════════════════════
+   工具類別（Utilities）
+   ══════════════════════════════════════════════ */
+
+/* 隱藏元素（保留無障礙） */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 顯示/隱藏 */
+.hidden {
+  display: none !important;
+}
+
+.invisible {
+  visibility: hidden;
+}
+
+/* 文字截斷 */
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 彈性佈局工具 */
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.gap-sm {
+  gap: var(--spacing-sm);
+}
+
+.gap-md {
+  gap: var(--spacing-md);
+}
+
+/* 文字顏色 */
+.text-accent {
+  color: var(--accent);
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.text-error {
+  color: var(--error);
+}
+
+.text-success {
+  color: var(--success);
+}
+
+/* 字型大小 */
+.text-xs {
+  font-size: var(--font-size-xs);
+}
+
+.text-sm {
+  font-size: var(--font-size-sm);
+}
+
+.text-lg {
+  font-size: var(--font-size-lg);
+}
+
+/* 字重 */
+.font-bold {
+  font-weight: 700;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+/* 間距 */
+.mt-sm { margin-top: var(--spacing-sm); }
+.mt-md { margin-top: var(--spacing-md); }
+.mb-sm { margin-bottom: var(--spacing-sm); }
+.mb-md { margin-bottom: var(--spacing-md); }
+
+/* ══════════════════════════════════════════════
+   頁首標題列（App Header）補充樣式
+   ══════════════════════════════════════════════ */
+.app-header__status {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-left: auto;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.status-dot--online {
+  background-color: var(--success);
+  box-shadow: 0 0 0 2px rgba(102, 187, 106, 0.3);
+}
+
+.status-dot--offline {
+  background-color: var(--error);
+}
+
+.status-dot--checking {
+  background-color: var(--warning);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.status-text {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+/* ══════════════════════════════════════════════
+   捲軸全域樣式
+   ══════════════════════════════════════════════ */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ══════════════════════════════════════════════
+   語言選擇器（Language Selector）
+   ══════════════════════════════════════════════ */
+.app-header__lang {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-left: var(--spacing-md);
+  flex-shrink: 0;
+}
+
+.lang-selector-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.lang-selector-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.lang-selector {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: var(--font-size-xs);
+  font-family: var(--font-family);
+  padding: 3px 6px;
+  cursor: pointer;
+  transition: border-color var(--transition), background-color var(--transition);
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23607D8B' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  padding-right: 22px;
+  min-width: 110px;
+}
+
+.lang-selector:hover {
+  border-color: var(--accent);
+  background-color: var(--bg-card-hover);
+}
+
+.lang-selector:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(0, 188, 212, 0.2);
+}
+
+.lang-selector option {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+}
+
+@media (max-width: 1100px) {
+  .lang-selector-label {
+    display: none;
+  }
+  .app-header__lang {
+    gap: var(--spacing-sm);
+  }
+}
+
+@media (max-width: 767px) {
+  .app-header__lang {
+    display: none;
+  }
+}
+
+/* ══════════════════════════════════════════════
+   聯邦學習面板與 Tab 切換 (Federated Learning & Tabs)
+   ══════════════════════════════════════════════ */
+
+/* 分頁切換器 (Tabs) */
+.app-tabs {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin: 0 var(--spacing-lg);
+  flex: 1;
+  justify-content: center;
+}
+
+.tab-btn {
+  background-color: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  transition: all var(--transition);
+}
+
+.tab-btn:hover {
+  background-color: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+.tab-btn.active {
+  background-color: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 188, 212, 0.2);
+}
+
+/* 頁面顯示控制 */
+.page-view {
+  display: none;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.page-view.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 聯邦學習佈局 (Federated Layout) */
+.federated-layout {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-md);
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+@media (max-width: 1024px) {
+  .federated-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Chart.js 畫布容器 */
+.chart-container {
+  position: relative;
+  height: 260px;
+  width: 100%;
+}
+
+.chart-container-large {
+  position: relative;
+  height: 320px;
+  width: 100%;
+}
+
+/* 聯邦學習面板下拉選單 */
+.federated-select {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 6px 12px;
+  border-radius: var(--radius);
+  font-size: var(--font-size-xs);
+  outline: none;
+}
+
+.federated-select:focus {
+  border-color: var(--accent);
+}
+
+/* 圖表圖例說明框 */
+.chart-legend-box {
+  background-color: rgba(0,0,0,0.2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--spacing-md);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  line-height: 1.8;
+}
+
+/* 效能指標進度條 (Metric Bars) */
+.metric-bars {
+  margin-top: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border);
+}
+
+.metric-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.metric-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+.metric-bar-bg {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border);
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.metric-bar-fill {
+  height: 100%;
+  background-color: var(--text-muted);
+  border-radius: 4px;
+  transition: width 1s ease-in-out;
+}
+
+.metric-bar-fill.primary {
+  background-color: var(--accent);
+}
+
+/* ══════════════════════════════════════════════
+   影像展示區 (三欄並排設定)
+   ══════════════════════════════════════════════ */
+.image-viewer {
+  display: grid;
+  /* 使用 repeat(3, 1fr) 讓三個卡片等寬並排 */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-sm);
+  width: 100%;
+}
+
+/* 確保卡片內的圖片容器比例正確，不會因為圖片大小不一而破壞排版 */
+.image-card__img-wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 200px; /* 🔥 加入最小高度，防止高度塌陷 */
+  aspect-ratio: 1 / 1;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-card__img-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* 讓長方形切片自動填滿正方形，避免留白 */
+}
+/* ══════════════════════════════════════════════
+   聯邦學習新版塊 (三大區塊配置)
+   ══════════════════════════════════════════════ */
+
+.federated-layout-new {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-md);
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.federated-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+}
+
+@media (max-width: 1024px) {
+  .federated-charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mt-lg {
+  margin-top: var(--spacing-lg);
+}
+
+/* 區塊三消融實驗表格樣式 */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.ablation-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.ablation-table th, 
+.ablation-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ablation-table th {
+  background-color: rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ablation-table tr:last-child td {
+  border-bottom: none;
+}
+
+.ablation-table tr:hover td {
+  background-color: rgba(0, 188, 212, 0.05); /* 滑鼠懸停特效 */
+}
+
+/* 強調最佳數據 */
+.highlight-cell {
+  color: var(--accent);
+  font-weight: 700;
+  background-color: rgba(0, 188, 212, 0.1);
+}

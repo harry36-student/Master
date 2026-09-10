@@ -1,0 +1,82 @@
+/* ============================================================
+   theme.css — 深色醫療主題 CSS 自訂屬性
+   Lung Cancer Analysis System
+   ============================================================ */
+
+:root {
+  /* 背景色系 */
+  --bg-primary: #0F1923;
+  --bg-secondary: #162030;
+  --bg-card: #1E2D3D;
+  --bg-card-hover: #243547;
+
+  /* 強調色（Teal / Cyan） */
+  --accent: #00BCD4;
+  --accent-dark: #0097A7;
+  --accent-light: #4DD0E1;
+
+  /* 文字色系 */
+  --text-primary: #FFFFFF;
+  --text-secondary: #B0BEC5;
+  --text-muted: #607D8B;
+
+  /* 狀態色 */
+  --error: #EF5350;
+  --error-bg: rgba(239, 83, 80, 0.12);
+  --success: #66BB6A;
+  --success-bg: rgba(102, 187, 106, 0.12);
+  --warning: #FFA726;
+  --warning-bg: rgba(255, 167, 38, 0.12);
+
+  /* 邊框與陰影 */
+  --border: #263545;
+  --border-accent: rgba(0, 188, 212, 0.4);
+  --shadow: rgba(0, 0, 0, 0.4);
+  --shadow-lg: rgba(0, 0, 0, 0.6);
+
+  /* 圓角 */
+  --radius: 8px;
+  --radius-lg: 12px;
+  --radius-sm: 4px;
+
+  /* 動畫過渡 */
+  --transition: 0.2s ease;
+  --transition-slow: 0.35s ease;
+
+  /* 間距 */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* 字型 */
+  --font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-base: 14px;
+  --font-size-md: 15px;
+  --font-size-lg: 18px;
+  --font-size-xl: 22px;
+  --font-size-2xl: 28px;
+
+  /* 報告段落色彩 */
+  --findings-color: #4DD0E1;
+  --findings-bg: rgba(77, 208, 225, 0.08);
+  --impression-color: #81C784;
+  --impression-bg: rgba(129, 199, 132, 0.08);
+  --recommendation-color: #FFB74D;
+  --recommendation-bg: rgba(255, 183, 77, 0.08);
+
+  /* 進度步驟色彩 */
+  --step-pending: #263545;
+  --step-active: #00BCD4;
+  --step-done: #66BB6A;
+  --step-error: #EF5350;
+
+  /* Z-index 層級 */
+  --z-toast: 9999;
+  --z-overlay: 100;
+  --z-header: 50;
+}

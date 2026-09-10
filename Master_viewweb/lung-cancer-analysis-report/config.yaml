@@ -1,0 +1,8 @@
+# Lung Cancer Analysis System Configuration
+# Lung Cancer Analysis System Configuration
+# 模型路徑已遷移至 backend/services/model_loader.py 的 MODEL_CONFIGS 字典
+
+lm_studio_url: "http://localhost:1234"
+llm_model_name: "medgemma-1.5"
+max_image_size_mb: 50
+llm_timeout_seconds: 60
